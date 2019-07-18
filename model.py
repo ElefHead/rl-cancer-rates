@@ -4,18 +4,20 @@ from policy import Policy
 import numpy as np
 
 
-def copy_model_parameters(sess, estimator1, estimator2):
-    e1_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator1.scope)]
-    e1_params = sorted(e1_params, key=lambda v: v.name)
-    e2_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator2.scope)]
-    e2_params = sorted(e2_params, key=lambda v: v.name)
+class ModelParametersCopier():
+    def __init__(self, estimator1, estimator2):
+        e1_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator1.scope)]
+        e1_params = sorted(e1_params, key=lambda v: v.name)
+        e2_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator2.scope)]
+        e2_params = sorted(e2_params, key=lambda v: v.name)
 
-    update_ops = []
-    for e1_v, e2_v in zip(e1_params, e2_params):
-        op = e2_v.assign(e1_v)
-        update_ops.append(op)
+        self.update_ops = []
+        for e1_v, e2_v in zip(e1_params, e2_params):
+            op = e2_v.assign(e1_v)
+            self.update_ops.append(op)
 
-    sess.run(update_ops)
+    def make(self, sess):
+        sess.run(self.update_ops)
 
 
 class Estimator():
@@ -54,29 +56,35 @@ class Estimator():
         self.losses = tf.squared_difference(self.y_placeholder, self.action_predictions)
         self.loss = tf.reduce_mean(self.losses)
 
-        self.optimizer = tf.train.AdamOptimizer()
+        self.optimizer = tf.train.AdamOptimizer(
+            learning_rate=0.00025,
+            epsilon=1e-6
+        )
         self.train_op = self.optimizer.minimize(self.loss, global_step=tf.contrib.framework.get_global_step())
 
-        self.summaries = tf.summary.merge([
-            tf.summary.scalar("loss", self.loss),
-            tf.summary.histogram("loss_hist", self.losses),
-            tf.summary.histogram("q_values_hist", self.predictions),
-            tf.summary.scalar("max_q_value", tf.reduce_max(self.predictions))
-        ])
+        # self.summaries = tf.summary.merge([
+        #     tf.summary.scalar("loss", self.loss),
+        #     tf.summary.histogram("loss_hist", self.losses),
+        #     tf.summary.histogram("q_values_hist", self.predictions),
+        #     tf.summary.scalar("max_q_value", tf.reduce_max(self.predictions))
+        # ])
 
     def predict(self, sess, s):
         return sess.run(self.predictions, feed_dict={ self.x_placeholder: s })
 
     def update(self, sess, s, a, y):
         feed_dict = {self.x_placeholder: s, self.y_placeholder: y, self.action_placeholder: a}
-        summaries, global_step, _, loss = sess.run([
-            self.summaries,
+        global_step, _, loss = sess.run([
+            # self.summaries,
             tf.contrib.framework.get_global_step(),
             self.train_op,
             self.loss
         ], feed_dict)
         if self.summary_writer:
-            self.summary_writer.add_summary(summaries, global_step)
+            self.summary_writer.add_summary(
+                # summaries,
+                global_step
+            )
 
         return loss
 

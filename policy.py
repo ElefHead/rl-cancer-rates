@@ -28,7 +28,7 @@ class Policy():
     def calculate_probabilistic_episode_end(self, state, threshold=0.3):
         # initialize episode termination vector that will be used to determine
         # whether or not we randomly terminate the episode
-        v = np.random.uniform(size=(self.state_dims, 1))
+        v = np.random.uniform(-1, 1, size=(self.state_dims, 1))
 
         # if the sigmoid function sigmoid(v', state) < threshold, we say the episode finished successfully.
         score = np.dot(state, v)    # calculate score for sigmoid
