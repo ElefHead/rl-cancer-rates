@@ -12,6 +12,7 @@ class Policy():
         self.W = np.random.uniform(size=(num_actions, state_dims, state_dims))
         self.sigma = None
         self.sigma = self.sample_sigma()
+        self.state = np.array(None)
 
     @jit
     def sample_sigma(self):
@@ -35,7 +36,9 @@ class Policy():
         return True if prob_episode_end < threshold else False
 
     @jit
-    def step(self, state, action, sigma):
+    def step(self, state, action_index):
+        action = self.W[action_index]
+        sigma = self.sigma[action_index]
         s = np.dot(state, action)
         noise = np.random.multivariate_normal(mean=s.squeeze(), cov=sigma)
         new_state = s + noise
@@ -46,10 +49,6 @@ class Policy():
             print("Episode end by done")
         return new_state, reward, done
 
-    def generate_action(self):
-        index = np.random.randint(0, self.num_actions)
-        return self.W[index], self.sigma[index]
-
     @jit
     def gen_data(self, max_rollouts=100, max_steps=100):
         observations = []
@@ -58,7 +57,7 @@ class Policy():
         actions = []
 
         for rollout in range(max_rollouts):
-            obs = np.random.uniform(size=(1, self.state_dims))
+            obs = self.reset()
             done = False
 
             totalr = 0.
@@ -66,11 +65,11 @@ class Policy():
             r = 0.
 
             while not done:
-                action, sigma = self.generate_action()
+                action_index = np.random.randint(0, self.num_actions)
                 observations.append(obs)
-                actions.append(action)
+                actions.append(action_index)
                 state_returns.append(r)
-                obs, r, done = self.step(obs, action, sigma)
+                obs, r, done = self.step(obs, action_index)
                 totalr += r
                 steps += 1
 
@@ -86,17 +85,32 @@ class Policy():
     def get_sigma(self):
         return self.sigma
 
+    def reset(self):
+        if self.state.shape == ():
+            self.state = np.random.uniform(size=(1, self.state_dims))
+        return self.state
 
-def main():
+
+def test():
     env = Policy()
+    s = env.reset()
+    new_s, r, d = env.step(s, 1)
+
+    print(np.array_equal(new_s, s))
+
+    new_s = env.reset()
+
+    print(np.array_equal(new_s, s))
+
     W = env.get_W()
     sigma = env.get_sigma()
     print(W.shape, sigma.shape)
 
+    env.reset()
     ret, state_ret, observs, acts = env.gen_data()
     print(ret.shape, state_ret.shape, observs.shape, acts.shape)
 
 
 if __name__ == '__main__':
-    main()
+    test()
 
