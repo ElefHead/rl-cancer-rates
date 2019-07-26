@@ -42,8 +42,8 @@ class Estimator():
 
         # X = tf.reshape(self.x_placeholder, self.input_shape)
 
-        layer1 = tf.contrib.layers.fully_connected(self.x_placeholder, 200)
-        layer2 = tf.contrib.layers.fully_connected(layer1, 200)
+        layer1 = tf.contrib.layers.fully_connected(self.x_placeholder, 64)
+        layer2 = tf.contrib.layers.fully_connected(layer1, 32)
 
         self.predictions = tf.contrib.layers.fully_connected(layer2, self.num_actions)
 

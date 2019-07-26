@@ -3,7 +3,8 @@ from numba import jit
 
 
 class Policy():
-    def __init__(self, state_dims=10, num_actions=5, seed=0):
+    def __init__(self, state_dims=10, num_actions=5, seed=0, episode_end="dual",
+                 death_threshold=0.1, recovery_threshold=0.999):
         np.random.seed(seed)
         self.state_dims = state_dims
         self.num_actions = num_actions
@@ -13,6 +14,21 @@ class Policy():
         self.sigma = None
         self.sigma = self.sample_sigma()
         self.state = np.array(None)
+
+        # episode end strategies
+        self.episode_end_map = {
+            "dual": self.calculate_dual_threshold_episode_end,
+            "probabilistic": self.calculate_probabilistic_episode_end
+        }
+        self.death_threshold = death_threshold
+        self.recovery_threshold = recovery_threshold
+
+        self.step_function = self.episode_end_map[episode_end]
+
+        # initialize episode termination vector that will be used to determine
+        # whether or not we randomly terminate the episode
+        self.v = np.random.uniform(-10, 10, size=(self.state_dims, 1))
+
 
     @jit
     def sample_sigma(self):
@@ -25,15 +41,27 @@ class Policy():
                 sigma[i] = np.inner(sigma[i], sigma[i])
         return sigma
 
-    def calculate_probabilistic_episode_end(self, state, threshold=0.3):
+    def calculate_probabilistic_episode_end(self, state):
         # initialize episode termination vector that will be used to determine
         # whether or not we randomly terminate the episode
-        v = np.random.uniform(-1, 1, size=(self.state_dims, 1))
+        # v = np.random.uniform(-1, 1, size=(self.state_dims, 1))
 
         # if the sigmoid function sigmoid(v', state) < threshold, we say the episode finished successfully.
-        score = np.dot(state, v)    # calculate score for sigmoid
+        score = np.dot(state, self.v)    # calculate score for sigmoid
         prob_episode_end = 1 / (1 + np.exp(-score))     # calculate sigmoid(v', state)
-        return True if prob_episode_end < threshold else False
+        reward = np.sum(np.where(np.logical_and(state < 2, state > 1)))
+        return (True, "Random end with sigmoid < 0.3", reward) if prob_episode_end < self.death_threshold else (False, None, reward)
+
+    @jit
+    def calculate_dual_threshold_episode_end(self, state):
+        score = np.dot(state, self.v)
+        dual_episode_end = 1 / (1 + np.exp(-score))
+        if dual_episode_end < self.death_threshold:
+            return True, "Episode end (Probabilistic death)", -10
+        elif dual_episode_end > self.recovery_threshold:
+            return True, "Episode end (Probabilistic recovery)", +20
+        else:
+            return False, None, -0.5
 
     @jit
     def step(self, state, action_index):
@@ -42,12 +70,12 @@ class Policy():
         s = np.dot(state, action)
         noise = np.random.multivariate_normal(mean=s.squeeze(), cov=sigma)
         new_state = s + noise
-        reward = np.sum(np.where(np.logical_and(new_state < 2, new_state > 1)))
 
-        done = self.calculate_probabilistic_episode_end(new_state)
+        _ = "max iteration reached"
+        done, message, reward = self.step_function(new_state)
         if done:
-            print("Episode end by done")
-        return new_state, reward, done
+            _ = message
+        return new_state, reward, done, _
 
     @jit
     def gen_data(self, max_rollouts=100, max_steps=100):
@@ -69,10 +97,11 @@ class Policy():
                 observations.append(obs)
                 actions.append(action_index)
                 state_returns.append(r)
-                obs, r, done = self.step(obs, action_index)
+                obs, r, done, _ = self.step(obs, action_index)
                 totalr += r
                 steps += 1
-
+                if done:
+                    print(_)
                 if steps >= max_steps:
                     break
 
@@ -94,7 +123,7 @@ class Policy():
 def test():
     env = Policy()
     s = env.reset()
-    new_s, r, d = env.step(s, 1)
+    new_s, r, d, _ = env.step(s, 1)
 
     print(np.array_equal(new_s, s))
 

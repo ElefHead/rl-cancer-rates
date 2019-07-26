@@ -69,13 +69,13 @@ def deep_q_learning(sess, env, q_estimator, target_estimator, num_episodes, num_
     print("Generating replay memory")
     state = env.reset()
     for i in range(replay_memory_init_size):
-        # action_probs = plc(sess, state, epsilons[min(total_t, epsilon_decay_steps-1)])
-        # action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+        action_probs = plc(sess, state, epsilons[min(total_t, epsilon_decay_steps-1)])
+        action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
 
-        action = np.random.choice(num_actions)
+        # action = np.random.choice(num_actions)
         # print("Action = {}".format(action))
 
-        next_state, reward, done = env.step(state, action)
+        next_state, reward, done, _ = env.step(state, action)
         replay_memory.append(Transistion(state, action, reward, next_state, done))
         if done:
             state = env.reset()
@@ -89,7 +89,7 @@ def deep_q_learning(sess, env, q_estimator, target_estimator, num_episodes, num_
 
         #reset env
         state = env.reset()
-        loss = None
+        loss = 0.
 
         for t in itertools.count():
 
@@ -101,12 +101,12 @@ def deep_q_learning(sess, env, q_estimator, target_estimator, num_episodes, num_
                 print("Copied model params to target network")
 
             print("\rStep {} ({}) @ Episode {}/{}, loss: {}".format(
-                t, total_t, i_episode + 1, num_episodes, loss), end="")
+                t, total_t, i_episode + 1, num_episodes, loss), end=" - ")
 
             action_probs = plc(sess, state, epsilon)
             action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
 
-            next_state, reward, done = env.step(state, action)
+            next_state, reward, done, _ = env.step(state, action)
 
             if len(replay_memory) == replay_memory_size:
                 replay_memory.pop(0)
@@ -134,6 +134,7 @@ def deep_q_learning(sess, env, q_estimator, target_estimator, num_episodes, num_
             )
 
             if done:
+                print(_, end=" - ")
                 break
 
             state = next_state
