@@ -10,7 +10,7 @@ class Policy():
         self.num_actions = num_actions
 
         # sample W
-        self.W = np.random.uniform(size=(num_actions, state_dims, state_dims))
+        self.W = np.random.uniform(-0.02, 0.02, size=(num_actions, state_dims, state_dims))
         self.sigma = None
         self.sigma = self.sample_sigma()
         self.state = np.array(None)

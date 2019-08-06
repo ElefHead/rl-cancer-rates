@@ -1,6 +1,6 @@
 from collections import namedtuple
-from model import ModelParametersCopier
-import plotting
+from simulator.model import ModelParametersCopier
+from simulator import plotting
 from os import path, makedirs
 import tensorflow as tf
 import numpy as np

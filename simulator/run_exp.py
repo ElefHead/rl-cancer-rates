@@ -1,10 +1,10 @@
 import tensorflow as tf
-from policy import Policy
-from model import Estimator
+from simulator.policy import Policy
+from simulator.model import Estimator
 
 from os import path
 
-from dqn import deep_q_learning
+from simulator.dqn import deep_q_learning
 
 if __name__ == '__main__':
     tf.reset_default_graph()
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     num_actions = 5
 
     # Where we save our checkpoints and graphs
-    experiment_dir = path.abspath("./experiments_{}".format("states"+str(num_states)))
+    experiment_dir = path.abspath("./simulator/experiments_{}".format("states"+str(num_states)))
 
     # Create a global step variable
     global_step = tf.Variable(0, name='global_step', trainable=False)

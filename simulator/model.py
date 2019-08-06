@@ -1,6 +1,6 @@
 import tensorflow as tf
 from os import path, makedirs
-from policy import Policy
+from simulator.policy import Policy
 import numpy as np
 
 
