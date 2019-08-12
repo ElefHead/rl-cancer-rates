@@ -5,7 +5,7 @@ class Constants:
     DIRECTORIES = {
         "root": path.abspath(".."),
         "qubbd": "QuBBD",
-        "data": "data"
+        "data": "data",
     }
 
     @staticmethod
@@ -16,12 +16,15 @@ class Constants:
         }
 
     FILES = {
-        "qubbdv3": "data_QuBBD_v3final.csv"
+        "qubbdv3": "data_QuBBD_v3final.csv",
+        "processed_data_state": "data_QuBBD_processed_state.csv",
+        "processed_data_decision": "data_QuBBD_processed_decision.csv"
     }
 
     DECISIONS = {
         #   decisions 1 columns
         1: {
+            "id": "Dummy ID",
             "decision": "Decision 1 (Induction Chemo) Y/N",
             "chemo": "Prescribed Chemo (Single/doublet/triplet/quadruplet/none/NOS)",
             "chemo_modification": "Chemo Modification (Y/N)",
@@ -31,12 +34,14 @@ class Constants:
         },
         #   decision 2 columns
         2: {
+            "id": "Dummy ID",
             "decision": "Decision 2 (CC / RT alone)",
             "cc_regimen": "CC Regimen(0= none, 1= platinum based, 2= cetuximab based, 3= others, 9=unknown)",
             "cc_modification": "CC modification (Y/N)"
         },
         #   decision 3 columns
         3: {
+            "id": "Dummy ID",
             "decision": "Decision 3 Neck Dissection (Y/N)"
         }
     }
@@ -44,6 +49,7 @@ class Constants:
     STATES = {
         #   state 0 columns
         0: {
+            "id": "Dummy ID",
             "age": "Age at Diagnosis (Calculated)",
             "pathological_grade": "Pathological Grade",
             "gender": "Gender",
@@ -61,6 +67,7 @@ class Constants:
         },
         #   state 1 columns
         1: {
+            "id": "Dummy ID",
             "dlt_present": "DLT (Y/N)",
             "dlt_type": "DLT_Type",
             "dlt_type_columns": {
@@ -85,6 +92,7 @@ class Constants:
         },
         #   state 2 columns
         2: {
+            "id": "Dummy ID",
             "dlt": "DLT 2",
             "imaging_columns": {
                 "cr_prim": "CR Primary 2",
