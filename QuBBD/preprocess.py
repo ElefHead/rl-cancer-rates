@@ -5,6 +5,7 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 
+
 def get_full_data():
     filepath = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES['qubbd'], Constants.DIRECTORIES["data"],
                          Constants.FILES["qubbdv3"])
@@ -40,13 +41,17 @@ def get_all_data(data, data_type):
     return data[required_columns]
 
 
-def encode_data(data, id_column="Dummy ID", save=False, save_loc=None):
+def encode_state_data(data, id_column="Dummy ID", save=False, save_loc=None):
     new_df = data[[id_column]].copy()
     columns = data.columns.values
+
+    state_columns = {column: [] for column in columns}
+
     for column in columns:
         num_values = len(pd.unique(data[column].values.flatten()))
         if num_values < data.shape[0]/10:
             one_hot = pd.get_dummies(data[column], prefix=column)
+            state_columns[column] = list(one_hot)
             new_df = new_df.join(one_hot)
         elif column == "Affected Lymph node cleaned":
             values = data[column].values
@@ -69,12 +74,47 @@ def encode_data(data, id_column="Dummy ID", save=False, save_loc=None):
                     one_hot[i, value_dict["None"]] = 1
             one_hot_frame = pd.DataFrame(data=one_hot,
                                          columns=value_set)
+            state_columns[column] = list(one_hot_frame)
             new_df = new_df.join(one_hot_frame)
         else:
             new_df[column] = data[column].copy()
+            state_columns[column] = [column]
         if save:
             new_df.to_csv(save_loc)
-    return new_df
+    return new_df, state_columns
+
+
+def generate_vector(state_data, all_state_columns, id_column="Dummy ID"):
+    n, m = state_data.shape
+    state_columns = Constants.STATES
+    num_states = len(state_columns.keys())
+
+    x_train = np.zeros((n * num_states, m-1), dtype=float)
+
+    state_col_dict = {i: [] for i in range(num_states)}
+
+    for state_num, state_cols in state_columns.items():
+        for ke, col in state_cols.items():
+            if col==id_column:
+                continue
+            if isinstance(col, str):
+                state_col_dict[state_num] += all_state_columns[col]
+            else:
+                print(col)
+                for k,v in col.items():
+                    state_col_dict[state_num] += all_state_columns[v]
+
+    for i in range(n):
+        start = 0
+        for j in range(num_states):
+            row_data = state_data.fillna(0)[state_col_dict[j]].iloc[[i]].values.flatten()
+            l = len(row_data)
+            if ">20" in row_data:
+                row_data[row_data == ">20"] = 20
+            x_train[(i*num_states)+j, start:start+l] = np.array(row_data)
+            start += l
+
+    return x_train
 
 
 if __name__ == '__main__':
@@ -90,5 +130,9 @@ if __name__ == '__main__':
 
     state_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"], Constants.DIRECTORIES["data"], Constants.FILES["processed_data_state"])
     decision_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"], Constants.DIRECTORIES["data"], Constants.FILES["processed_data_decision"])
-    all_state = encode_data(state_all_state, save=True, save_loc=state_data_loc)
+    all_state, all_state_columns = encode_state_data(state_all_state, save=False, save_loc=state_data_loc)
+    print(all_state.shape)
+    x_train = generate_vector(all_state, all_state_columns)
 
+    print(x_train[:3])
+    print(x_train.shape)
