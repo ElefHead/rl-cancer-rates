@@ -79,12 +79,32 @@ def encode_state_data(data, id_column="Dummy ID", save=False, save_loc=None):
         else:
             new_df[column] = data[column].copy()
             state_columns[column] = [column]
-        if save:
-            new_df.to_csv(save_loc)
+    if save:
+        new_df.to_csv(save_loc)
     return new_df, state_columns
 
 
-def generate_vector(state_data, all_state_columns, id_column="Dummy ID"):
+def encode_decision_data(data, id_column="Dummy ID", save=False, save_loc=None):
+    new_df = data[[id_column]].copy()
+    columns = data.columns.values
+
+    decision_columns = {column: [] for column in columns}
+
+    for column in columns:
+        num_values = len(pd.unique(data[column].values.flatten()))
+        if num_values < data.shape[0] / 10:
+            one_hot = pd.get_dummies(data[column], prefix=column)
+            decision_columns[column] = list(one_hot)
+            new_df = new_df.join(one_hot)
+        else:
+            new_df[column] = data[column].copy()
+            decision_columns[column] = [column]
+    if save:
+        new_df.to_csv(save_loc)
+    return new_df, decision_columns
+
+
+def generate_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
     n, m = state_data.shape
     state_columns = Constants.STATES
     num_states = len(state_columns.keys())
@@ -100,7 +120,6 @@ def generate_vector(state_data, all_state_columns, id_column="Dummy ID"):
             if isinstance(col, str):
                 state_col_dict[state_num] += all_state_columns[col]
             else:
-                print(col)
                 for k,v in col.items():
                     state_col_dict[state_num] += all_state_columns[v]
 
@@ -113,11 +132,58 @@ def generate_vector(state_data, all_state_columns, id_column="Dummy ID"):
                 row_data[row_data == ">20"] = 20
             x_train[(i*num_states)+j, start:start+l] = np.array(row_data)
             start += l
-
     return x_train
 
 
-if __name__ == '__main__':
+def generate_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID"):
+    n, m = decision_data.shape
+    decision_columns = Constants.DECISIONS
+    num_decisions = decision_columns.keys()
+
+    y_train = np.zeros((n * len(num_decisions), m-1))
+
+    decision_col_dict = {i: [] for i in num_decisions}
+
+    for decision_num, decision_cols in decision_columns.items():
+        for ke, col in decision_cols.items():
+            if col==id_column:
+                continue
+            if isinstance(col, str):
+                decision_col_dict[decision_num] += all_decision_columns[col]
+            else:
+                for k,v in col.items():
+                    decision_col_dict[decision_num] += all_decision_columns[v]
+
+    for i in range(n):
+        start = 0
+        for j, dec in enumerate(num_decisions):
+            row_data = decision_data.fillna(0)[decision_col_dict[dec]].iloc[[i]].values.flatten()
+            l = len(row_data)
+            y_train[(i*len(num_decisions))+j, start:start+l] = np.array(row_data)
+            start += l
+    return y_train
+
+
+def generate_data(save=False):
+    print("Reading data")
+    data = get_full_data()
+    print("Data read, creating vectors")
+    state_all_state = get_all_data(data, "states")
+    decision_all = get_all_data(data, "decisions")
+    state_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"],
+                               Constants.DIRECTORIES["data"], Constants.FILES["processed_data_state"])
+    decision_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"],
+                                  Constants.DIRECTORIES["data"], Constants.FILES["processed_data_decision"])
+    all_state, all_state_columns = encode_state_data(state_all_state, save=save, save_loc=state_data_loc)
+    print("Created state vectors")
+    all_decisions, all_decision_columns = encode_decision_data(decision_all, save=save, save_loc=decision_data_loc)
+    print("Created decision vectors")
+    x_train = generate_data_vector(all_state, all_state_columns)
+    y_train = generate_decision_vector(all_decisions, all_decision_columns)
+    return x_train, y_train
+
+
+def test_funcs():
     data = get_full_data()
     state_0 = get_stage_data(data, "states", 0)
     print(state_0.shape)
@@ -128,11 +194,9 @@ if __name__ == '__main__':
     decision_all = get_all_data(data, "decisions")
     print(decision_all.shape)
 
-    state_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"], Constants.DIRECTORIES["data"], Constants.FILES["processed_data_state"])
-    decision_data_loc = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES["qubbd"], Constants.DIRECTORIES["data"], Constants.FILES["processed_data_decision"])
-    all_state, all_state_columns = encode_state_data(state_all_state, save=False, save_loc=state_data_loc)
-    print(all_state.shape)
-    x_train = generate_vector(all_state, all_state_columns)
 
-    print(x_train[:3])
-    print(x_train.shape)
+if __name__ == '__main__':
+    x_train, y_train = generate_data()
+    print(x_train.shape, y_train.shape)
+
+
