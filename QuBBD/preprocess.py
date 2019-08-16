@@ -104,7 +104,7 @@ def encode_decision_data(data, id_column="Dummy ID", save=False, save_loc=None):
     return new_df, decision_columns
 
 
-def generate_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
+def create_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
     n, m = state_data.shape
     state_columns = Constants.STATES
     num_states = len(state_columns.keys())
@@ -135,7 +135,7 @@ def generate_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
     return x_train
 
 
-def generate_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID"):
+def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID"):
     n, m = decision_data.shape
     decision_columns = Constants.DECISIONS
     num_decisions = decision_columns.keys()
@@ -178,8 +178,69 @@ def generate_data(save=False):
     print("Created state vectors")
     all_decisions, all_decision_columns = encode_decision_data(decision_all, save=save, save_loc=decision_data_loc)
     print("Created decision vectors")
-    x_train = generate_data_vector(all_state, all_state_columns)
-    y_train = generate_decision_vector(all_decisions, all_decision_columns)
+    x_train = create_data_vector(all_state, all_state_columns)
+    y_train = create_decision_vector(all_decisions, all_decision_columns)
+    return x_train, y_train
+
+
+def create_one_state_data(state_data, all_state_columns, state=0, id_column="Dummy ID"):
+    if state not in Constants.STATES:
+        print("State not present")
+        return None
+
+    state_columns = Constants.STATES[state]
+
+    state_col_list = []
+
+    for key, col in state_columns.items():
+        if col == id_column:
+            continue
+        if isinstance(col, str):
+            state_col_list += all_state_columns[col]
+        else:
+            for k,v in col.items():
+                state_col_list += all_state_columns[v]
+
+    x_train = state_data[state_col_list].values
+
+    x_train[x_train == ">20"] = 20  # For that one value that isn't corrected in pycharm cache
+
+    return x_train.astype(np.float)
+
+
+def create_one_decision_data(decision_data, all_decision_columns, decision=1, id_column="Dummy ID"):
+    if decision not in Constants.DECISIONS:
+        print("Decision not present")
+        return None
+
+    decision_columns = Constants.DECISIONS[decision]
+
+    decision_col_list = []
+
+    for key, col in decision_columns.items():
+        if col == id_column:
+            continue
+        if isinstance(col, str):
+            decision_col_list += all_decision_columns[col]
+        else:
+            for k,v in col.items():
+                decision_col_list += all_decision_columns[v]
+
+    return decision_data[decision_col_list].values.astype(np.uint)
+
+
+def generate_one_state_data(state=0):
+    data = get_full_data()
+
+    state_all_state = get_all_data(data, "states")
+    decision_all = get_all_data(data, "decisions")
+
+    all_state, all_state_columns = encode_state_data(state_all_state)
+    all_decisions, all_decision_columns = encode_decision_data(decision_all)
+
+    x_train = create_one_state_data(all_state, all_state_columns, state=state)
+    y_train = create_one_decision_data(all_decisions, all_decision_columns, decision=state+1)
+
     return x_train, y_train
 
 
@@ -199,4 +260,5 @@ if __name__ == '__main__':
     x_train, y_train = generate_data()
     print(x_train.shape, y_train.shape)
 
-
+    # x_train, y_train = generate_one_state_data(2)
+    # print(x_train.shape, y_train.shape)
