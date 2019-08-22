@@ -135,12 +135,35 @@ def create_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
     return x_train
 
 
-def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID"):
+def create_cross_product_decision_data(decision_data, num_decisions, decision_col_dict, id_column="Dummy ID"):
+    new_df = decision_data[[id_column]].copy()
+
+    n, m = decision_data.shape
+    new_decision_col_dict = {i: [] for i in num_decisions}
+
+    # for decision_num, decision_cols in decision_columns.items():
+    for num, cols in decision_col_dict.items():
+        len_cols = len(cols)
+        for i in range(len_cols):
+            for j in range(i+1, len_cols):
+                col_name = "{}cross{}".format(cols[i], cols[j])
+                new_decision_col_dict[num].append(col_name)
+                new_df[col_name] = np.nan
+
+    for i in range(n):
+        for state, col in new_decision_col_dict.items():
+            for c in col:
+                col1, col2 = c.split("cross")
+                if decision_data[col1][i] == 1 and decision_data[col2][i] == 1:
+                    new_df.at[c, i] = 1
+
+    return new_decision_col_dict, new_df
+
+
+def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID", cross_product=True):
     n, m = decision_data.shape
     decision_columns = Constants.DECISIONS
     num_decisions = decision_columns.keys()
-
-    y_train = np.zeros((n * len(num_decisions), m-1))
 
     decision_col_dict = {i: [] for i in num_decisions}
 
@@ -154,10 +177,19 @@ def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy
                 for k,v in col.items():
                     decision_col_dict[decision_num] += all_decision_columns[v]
 
+    if cross_product:
+        decision_col_dict, new_df = create_cross_product_decision_data(decision_data, num_decisions, decision_col_dict)
+        m = new_df.shape[1]
+
+    y_train = np.zeros((n * len(num_decisions), m - 1))
+
     for i in range(n):
         start = 0
         for j, dec in enumerate(num_decisions):
-            row_data = decision_data.fillna(0)[decision_col_dict[dec]].iloc[[i]].values.flatten()
+            if cross_product:
+                row_data = new_df.fillna(0)[decision_col_dict[dec]].iloc[[i]].values.flatten()
+            else:
+                row_data = decision_data.fillna(0)[decision_col_dict[dec]].iloc[[i]].values.flatten()
             l = len(row_data)
             y_train[(i*len(num_decisions))+j, start:start+l] = np.array(row_data)
             start += l
@@ -259,6 +291,3 @@ def test_funcs():
 if __name__ == '__main__':
     x_train, y_train = generate_data()
     print(x_train.shape, y_train.shape)
-
-    # x_train, y_train = generate_one_state_data(2)
-    # print(x_train.shape, y_train.shape)
