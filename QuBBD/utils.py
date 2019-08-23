@@ -8,5 +8,3 @@ def read(filepath, encoding='ISO-8859-1', sep=",", dtype=str):
 
 
 
-
-

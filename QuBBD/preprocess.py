@@ -154,8 +154,8 @@ def create_cross_product_decision_data(decision_data, num_decisions, decision_co
         for state, col in new_decision_col_dict.items():
             for c in col:
                 col1, col2 = c.split("cross")
-                if decision_data[col1][i] == 1 and decision_data[col2][i] == 1:
-                    new_df.at[c, i] = 1
+                if int(decision_data[col1][i]) == 1 and int(decision_data[col2][i]) == 1:
+                    new_df.at[i, c] = 1
 
     return new_decision_col_dict, new_df
 
@@ -276,6 +276,28 @@ def generate_one_state_data(state=0):
     return x_train, y_train
 
 
+def isolate_x_by_single_decision(x_train, y_train, decision_index):
+    indices = np.argwhere(y_train[:, decision_index] == 1).flatten()
+    return x_train[indices, :], indices
+
+
+def count_non_zero_decisions(x_train, y_train, threshold=None):
+    count = 0
+    for i in range(y_train.shape[1]):
+        reduced_x, indices = isolate_x_by_single_decision(x_train, y_train, i)
+        num_indices = len(indices)
+        if num_indices:
+            if threshold is not None:
+                count += 1 if num_indices > threshold else 0
+            else:
+                count += 1
+    return count
+
+
+def get_next_states(x_train, indices):
+    return x_train[indices + 1]
+
+
 def test_funcs():
     data = get_full_data()
     state_0 = get_stage_data(data, "states", 0)
@@ -291,3 +313,6 @@ def test_funcs():
 if __name__ == '__main__':
     x_train, y_train = generate_data()
     print(x_train.shape, y_train.shape)
+
+    reduced_x, indices = isolate_x_by_single_decision(x_train, y_train, 0)
+    print(reduced_x.shape)
