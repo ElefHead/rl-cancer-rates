@@ -329,15 +329,15 @@ def create_one_state_data(state_data, all_state_columns, state=0, id_column="Dum
 
 def create_one_decision_data(decision_data, all_decision_columns, decision=1, id_column="Dummy ID"):
     '''
-        Function to vectorize one timestep state data
-        :param decision_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded decision data
-        :param all_decision_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
-                decision column names
-        :param decision: <class 'integer'> timestep
-        :param id_column: <class 'string'> name of the id column in the dataset
-                Used to avoid that column and create a new dataframe
-        :return: <class 'numpy.ndarray'> vectorized decision data
-        '''
+    Function to vectorize one timestep state data
+    :param decision_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded decision data
+    :param all_decision_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
+            decision column names
+    :param decision: <class 'integer'> timestep
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :return: <class 'numpy.ndarray'> vectorized decision data
+    '''
     if decision not in Constants.DECISIONS:
         print("Decision not present")
         return None
