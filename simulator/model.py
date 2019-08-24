@@ -1,3 +1,7 @@
+'''
+    Code adapted from https://github.com/dennybritz/reinforcement-learning/tree/master/DQN
+'''
+
 import tensorflow as tf
 from os import path, makedirs
 from simulator.policy import Policy

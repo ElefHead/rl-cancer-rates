@@ -42,6 +42,12 @@ class Policy():
         return sigma
 
     def calculate_probabilistic_episode_end(self, state):
+        '''
+        Function to check episode end based on a random vector and one threshold.
+        :param state: <class 'numpy.ndarray'> current state vector
+        :return: (<class 'boolean'>, <class 'string'> or <'class 'Nonetype'>, <class 'float'>)
+                A tuple containing boolean to indicate episode end, cause of the episode end, reward value
+        '''
         # initialize episode termination vector that will be used to determine
         # whether or not we randomly terminate the episode
         # v = np.random.uniform(-1, 1, size=(self.state_dims, 1))
@@ -54,6 +60,12 @@ class Policy():
 
     @jit
     def calculate_dual_threshold_episode_end(self, state):
+        '''
+        Function to check episode end based on two probability thresholds. One to simulate recovery, other to simulate death.
+        :param state: <class 'numpy.ndarray'> current state vector
+        :return: (<class 'boolean'>, <class 'string'> or <'class 'Nonetype'>, <class 'float'>)
+                A tuple containing boolean to indicate episode end, cause of the episode end, reward value
+        '''
         score = np.dot(state, self.v)
         dual_episode_end = 1 / (1 + np.exp(-score))
         if dual_episode_end < self.death_threshold:
@@ -65,6 +77,13 @@ class Policy():
 
     @jit
     def step(self, state, action_index):
+        '''
+        Function to simulate taking a step.
+        :param state: <class 'numpy.ndarray'> current state vector
+        :param action_index: <class 'integer'> integer indicating the action to be taken
+        :return: (<class 'numpy.ndarray'>, <class 'float'>, <class 'boolean'>, <class 'string'>)
+                A tuple containing next state, reward, boolean indicating episode end, message
+        '''
         action = self.W[action_index]
         sigma = self.sigma[action_index]
         s = np.dot(state, action)
@@ -79,6 +98,13 @@ class Policy():
 
     @jit
     def gen_data(self, max_rollouts=100, max_steps=100):
+        '''
+        Function to generate data by rolling out the expert policy. Not used for DQNs.
+        :param max_rollouts: <class 'integer'> integer indicating max number of full rollouts (till episode end)
+        :param max_steps: <class 'integer'> integer indicating max iterations per episode.
+        :return: (<class 'numpy.ndarray'>, <class 'numpy.ndarray'>, <class 'numpy.ndarray'>, <class 'numpy.ndarray'>)
+                A tuple of episodic returns, state returns, all states, all actions
+        '''
         observations = []
         state_returns = []
         episode_returns = []

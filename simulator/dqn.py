@@ -1,3 +1,8 @@
+'''
+    Code adapted and modified from https://github.com/dennybritz/reinforcement-learning/tree/master/DQN
+'''
+
+
 from collections import namedtuple
 from simulator.model import ModelParametersCopier
 from simulator import plotting
