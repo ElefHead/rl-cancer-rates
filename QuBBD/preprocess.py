@@ -7,12 +7,25 @@ import pandas as pd
 
 
 def get_full_data():
+    '''
+    Function to read and fetch QuBBD data as a dataframe
+    QuBBD data resides as data_QuBBD_v3final.csv (to change name, see constants.py)
+    :return: <class 'pandas.core.frame.DataFrame'> pandas dataframe containing QuBBD data
+    '''
     filepath = path.join(Constants.DIRECTORIES["root"], Constants.DIRECTORIES['qubbd'], Constants.DIRECTORIES["data"],
                          Constants.FILES["qubbdv3"])
     return read(filepath)
 
 
 def get_stage_data(data, data_type="state", stage=1):
+    '''
+    Specifically gets single "stage" of decision or state data.
+    The stage refers to the timestep. S_0 -> D_1 -> S_1 -> ... -> S_t -> D_t+1
+    :param data: <class 'pandas.core.frame.DataFrame'> dataframe containing Qubbd data
+    :param data_type: <class 'string'> either "state" or "decisions"
+    :param stage: <class 'integer'> timestep
+    :return: <class 'pandas.core.frame.DataFrame'> pandas dataframe containing data from specific timestep
+    '''
     state_columns_stage_data = Constants.get_data_dict()[data_type]
     if stage not in state_columns_stage_data:
         return np.empty([0,0])
@@ -28,6 +41,12 @@ def get_stage_data(data, data_type="state", stage=1):
 
 
 def get_all_data(data, data_type):
+    '''
+    Gets data from all timesteps for either states or decisions
+    :param data: <class 'pandas.core.frame.DataFrame'> dataframe containing Qubbd data
+    :param data_type: <class 'string'> either "state" or "decisions"
+    :return: <class 'pandas.core.frame.DataFrame'> pandas dataframe containing state or decision data
+    '''
     state_columns_stage_data = Constants.get_data_dict()[data_type]
     required_columns = []
     for stage, stage_columns in state_columns_stage_data.items():
@@ -42,6 +61,19 @@ def get_all_data(data, data_type):
 
 
 def encode_state_data(data, id_column="Dummy ID", save=False, save_loc=None):
+    '''
+    Function to one hot encode categorical state data
+    :param data: <class 'pandas.core.frame.DataFrame'> dataframe containing Qubbd data
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :param save: <class 'boolean'> Set true to save data as a .csv file
+    :param save_loc: <class 'string'> Location to save the data
+    :return: (<class 'pandas.core.frame.DataFrame'>, <class 'dict'>) A tuple containing a dataframe
+            of one hot encoded state data and a dictionary containing states mapped with their one hot encoded
+            state names
+            Eg. if column gets encoded as column_yes and column_no,
+            the dictionary will contain column: [column_yes, column_no]
+    '''
     new_df = data[[id_column]].copy()
     columns = data.columns.values
 
@@ -85,6 +117,19 @@ def encode_state_data(data, id_column="Dummy ID", save=False, save_loc=None):
 
 
 def encode_decision_data(data, id_column="Dummy ID", save=False, save_loc=None):
+    '''
+    Function to one hot encode categorical decision data
+    :param data: <class 'pandas.core.frame.DataFrame'> dataframe containing Qubbd data
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :param save: <class 'boolean'> Set true to save data as a .csv file
+    :param save_loc: <class 'string'> Location to save the data
+    :return: (<class 'pandas.core.frame.DataFrame'>, <class 'dict'>) A tuple containing a dataframe
+            of one hot encoded decision data and a dictionary containing decision mapped with their one hot encoded
+            decision column names
+            Eg. if column gets encoded as column_yes and column_no,
+            the dictionary will contain column: [column_yes, column_no]
+    '''
     new_df = data[[id_column]].copy()
     columns = data.columns.values
 
@@ -105,6 +150,15 @@ def encode_decision_data(data, id_column="Dummy ID", save=False, save_loc=None):
 
 
 def create_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
+    '''
+    Function to vectorize state data
+    :param state_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded state data
+    :param all_state_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
+            state column names
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :return: <class 'numpy.ndarray'> vectorized state data
+    '''
     n, m = state_data.shape
     state_columns = Constants.STATES
     num_states = len(state_columns.keys())
@@ -136,6 +190,15 @@ def create_data_vector(state_data, all_state_columns, id_column="Dummy ID"):
 
 
 def create_cross_product_decision_data(decision_data, num_decisions, decision_col_dict, id_column="Dummy ID"):
+    '''
+    Function to produce cross product of one hot encoded decision data
+    :param decision_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded decision data
+    :param num_decisions: <class 'list'> list of decision timesteps
+    :param decision_col_dict: <class 'dict'> dict of decision column names mapped with their one hot encoded names
+    :param id_column: <class 'str'> id column name, to avoid or to create new df
+    :return: (<class 'dict'>, <class 'pandas.core.frame.DataFrame'>) dict containing new column names mapped with the timestep,
+            new dataframe containing cross product data
+    '''
     new_df = decision_data[[id_column]].copy()
 
     n, m = decision_data.shape
@@ -161,6 +224,15 @@ def create_cross_product_decision_data(decision_data, num_decisions, decision_co
 
 
 def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy ID", cross_product=True):
+    '''
+    Function to vectorize decision data
+    :param decision_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded decision data
+    :param all_decision_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
+            decision column names
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :return: <class 'numpy.ndarray'> vectorized decision data
+    '''
     n, m = decision_data.shape
     decision_columns = Constants.DECISIONS
     num_decisions = decision_columns.keys()
@@ -197,6 +269,11 @@ def create_decision_vector(decision_data, all_decision_columns, id_column="Dummy
 
 
 def generate_data(save=False):
+    '''
+    One function to get data after all preprocessing
+    :param save: <class 'boolean'> save or not
+    :return: (<class 'numpy.ndarray'>, <class 'numpy.ndarray'>)vectorized data as training and testing
+    '''
     print("Reading data")
     data = get_full_data()
     print("Data read, creating vectors")
@@ -216,6 +293,16 @@ def generate_data(save=False):
 
 
 def create_one_state_data(state_data, all_state_columns, state=0, id_column="Dummy ID"):
+    '''
+    Function to vectorize one timestep state data
+    :param state_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded state data
+    :param all_state_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
+            state column names
+    :param state: <class 'integer'> timestep
+    :param id_column: <class 'string'> name of the id column in the dataset
+            Used to avoid that column and create a new dataframe
+    :return: <class 'numpy.ndarray'> vectorized state data
+    '''
     if state not in Constants.STATES:
         print("State not present")
         return None
@@ -241,6 +328,16 @@ def create_one_state_data(state_data, all_state_columns, state=0, id_column="Dum
 
 
 def create_one_decision_data(decision_data, all_decision_columns, decision=1, id_column="Dummy ID"):
+    '''
+        Function to vectorize one timestep state data
+        :param decision_data: <class 'pandas.core.frame.DataFrame'> dataframe containing one hot encoded decision data
+        :param all_decision_columns: <class 'dict'> a dictionary containing decision mapped with their one hot encoded
+                decision column names
+        :param decision: <class 'integer'> timestep
+        :param id_column: <class 'string'> name of the id column in the dataset
+                Used to avoid that column and create a new dataframe
+        :return: <class 'numpy.ndarray'> vectorized decision data
+        '''
     if decision not in Constants.DECISIONS:
         print("Decision not present")
         return None
@@ -262,6 +359,11 @@ def create_one_decision_data(decision_data, all_decision_columns, decision=1, id
 
 
 def generate_one_state_data(state=0):
+    '''
+    Function to generate one timestep vectorized training and testing data
+    :param state: <class 'integer'> timestep (refers to state timestep)
+    :return: (<class 'numpy.ndarray'>, <class 'numpy.ndarray'>) one timestep training and testing data
+    '''
     data = get_full_data()
 
     state_all_state = get_all_data(data, "states")
@@ -277,11 +379,25 @@ def generate_one_state_data(state=0):
 
 
 def isolate_x_by_single_decision(x_train, y_train, decision_index):
+    '''
+    Function to get training data that lead to one decision
+    :param x_train: <class 'numpy.ndarray'> training data vectors
+    :param y_train: <class 'numpy.ndarray'> output (decision) data vectors
+    :param decision_index: <class 'integer'> output index to isolate
+    :return: (<class 'numpy.ndarray'>, <class 'list'>) isolated training vectors and list containing indices
+    '''
     indices = np.argwhere(y_train[:, decision_index] == 1).flatten()
     return x_train[indices, :], indices
 
 
 def count_non_zero_decisions(x_train, y_train, threshold=None):
+    '''
+    Function to check if some decision has ever been taken
+    :param x_train: <class 'numpy.ndarray'> training data vectors
+    :param y_train: <class 'numpy.ndarray'> output (decision) data vectors
+    :param threshold: <class 'integer'> set threshold value to see if a decision has been taken x number of times
+    :return:
+    '''
     count = 0
     for i in range(y_train.shape[1]):
         reduced_x, indices = isolate_x_by_single_decision(x_train, y_train, i)
@@ -295,6 +411,12 @@ def count_non_zero_decisions(x_train, y_train, threshold=None):
 
 
 def get_next_states(x_train, indices):
+    '''
+    Function to get the succeeding states. Used for linear model creation.
+    :param x_train: <class 'numpy.ndarray'> training data vectors
+    :param indices: <class 'list'> list of indices
+    :return: <class 'numpy.ndarray'> matrix containing succeeding state vectors
+    '''
     return x_train[indices + 1]
 
 
@@ -311,6 +433,8 @@ def test_funcs():
 
 
 if __name__ == '__main__':
+    print(type(get_full_data()))
+
     x_train, y_train = generate_data()
     print(x_train.shape, y_train.shape)
 
