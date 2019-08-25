@@ -12,7 +12,7 @@ The functioning of the environment can be summarized as:
 
     > This just means we model the environment as a Gaussian and each next state depends on a small multinomial noise by the use of action chosen on current state.
 
-      
+
 3. The reward and episode ends right now are calculated as a sigmoid of the dot product of a random vector v and the current state. The function then
     has a threshold for "death" and "recovery".
 
