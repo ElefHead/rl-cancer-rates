@@ -9,7 +9,10 @@ The functioning of the environment can be summarized as:
 2. For each action _a_, sample a diagonal (D x D) matrix W<sub>_a_</sub> and a diagonal matrix
     Sigma<sub>_a_</sub> such that _P_(s<sub>t+1</sub> - s<sub>t</sub> | s<sub>t</sub>, a<sub>t</sub>) is
     a Gaussian distribution with mean W<sub>a</sub>*s<sub>t</sub> and covariance Sigma<sub>a</sub>.
+
     > This just means we model the environment as a Gaussian and each next state depends on a small multinomial noise by the use of action chosen on current state.
+
+      
 3. The reward and episode ends right now are calculated as a sigmoid of the dot product of a random vector v and the current state. The function then
     has a threshold for "death" and "recovery".
 
