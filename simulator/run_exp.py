@@ -24,7 +24,6 @@ if __name__ == '__main__':
     q_estimator = Estimator(scope="q_estimator", num_states=num_states)
     target_estimator = Estimator(scope="target_q", num_states=num_states)
 
-
     env = Policy(state_dims=num_states, num_actions=num_actions, recovery_threshold=0.999, death_threshold=0.01)
 
     with tf.Session() as sess:

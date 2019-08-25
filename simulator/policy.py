@@ -5,6 +5,18 @@ from numba import jit
 class Policy():
     def __init__(self, state_dims=10, num_actions=5, seed=0, episode_end="dual",
                  death_threshold=0.1, recovery_threshold=0.999):
+        '''
+        Constructor to initialize environment
+        :param state_dims: <class 'integer'> number of dimensions for the state vector
+        :param num_actions: <class 'integer'> number of possible actions in the environment
+        :param seed: <class 'integer'> set numpy random seed
+        :param episode_end: <class 'string'> a string that indicates which episode end strategy to be used. Default = "dual".
+                Possible values = {"dual", "probabilistic"}.
+                "dual" models "death" and "recovery" as two thresholds (see function  self.calculate_dual_threshold_episode_end)
+                "probabilistic" models just one random probabilistic episode end (see function self.calculate_probabilistic_episode_end)
+        :param death_threshold: <class 'float'> Used as lower bound when episode_end="dual"
+        :param recovery_threshold: <class 'float'> Used as upper bound when episode_end="dual"
+        '''
         np.random.seed(seed)
         self.state_dims = state_dims
         self.num_actions = num_actions
